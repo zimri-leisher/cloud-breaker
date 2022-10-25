@@ -2,9 +2,11 @@
 #include "Arduino.h"
 //#include "Fire.h"
 #define LED_PIN     7
-#define WIDTH 8
-#define HEIGHT 32
-#define NUM_LEDS    8 * 32
+#define LED_WIDTH 8
+#define LED_HEIGHT 32
+#define NUM_LEDS LED_WIDTH * LED_HEIGHT
+#define IMAGE_WIDTH 8
+#define IMAGE_HEIGHT 32
 
 CRGB leds[NUM_LEDS];
 
@@ -221,8 +223,8 @@ void setPixel(int x, int y, int red, int green, int blue) {
     red = clamp(red);
     green = clamp(green);
     blue = clamp(blue);
-    x = (x + xOffset) % WIDTH;
-    y = (y + yOffset) % HEIGHT;
+    x = x % WIDTH;
+    y = y % HEIGHT;
     if (y % 2 == 0) {
         // reverse every other row
         x = (WIDTH - 1) - x;
@@ -232,20 +234,17 @@ void setPixel(int x, int y, int red, int green, int blue) {
 }
 
 void displayImage(bool scroll) {
-    for (int x = 0; x < WIDTH; x++) {
-        for (int y = 0; y < HEIGHT; y++) {
-            int idx = (x + y * WIDTH) * 3;
+    for (int x = 0; x < LED_WIDTH; x++) {
+        for (int y = 0; y < LED_HEIGHT; y++) {
+            int adjustedX = (x + xOffset) % IMAGE_WIDTH;
+            int adjustedY = (y + yOffset) % IMAGE_HEIGHT;
+            int idx = (x + y * LED_WIDTH) * 3;
             int red = pgm_read_byte(&colors[idx]);
             int blue = pgm_read_byte(&colors[idx + 1]);
             int green = pgm_read_byte(&colors[idx + 2]);
             if(blue > red + 35) {
                 green -= 100;
             }
-//            if(blue >  red && blue >  green) {
-//                 then it's a blue color primarily
-//                green -= 100;
-//            } else {
-//            }
             setPixel(x, y, red, green, blue);
         }
     }
@@ -269,8 +268,8 @@ void displayFullscreenRainbowCycle(int colors, float saturation, float brightnes
 //        Serial.print(green);
 //        Serial.print(" ");
 //        Serial.println(blue);
-        for (int x = 0; x < WIDTH; x++) {
-            for (int y = 0; y < HEIGHT; y++) {
+        for (int x = 0; x < LED_WIDTH; x++) {
+            for (int y = 0; y < LED_HEIGHT; y++) {
                 setPixel(x, y, red, green, blue);
             }
         }
@@ -286,7 +285,6 @@ void displayMovingRainbow(int colors, int speed, bool axis, float saturation, fl
 
 
 void loop() {
-    Serial.begin(9600);
 //    random16_add_entropy(random());
 //    // fastest update is about 30 ms
 //    // displayFullscreenRainbowCycle(32, 1, 1, 50); // good values for a fast loop
