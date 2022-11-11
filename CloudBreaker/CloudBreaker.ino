@@ -2,7 +2,7 @@
 #include "Arduino.h"
 //#include "Fire.h"
 #define LED_PIN     7
-#define LED_WIDTH 8
+#define LED_WIDTH 16
 #define LED_HEIGHT 32
 #define NUM_LEDS LED_WIDTH * LED_HEIGHT
 #define IMAGE_WIDTH 8
@@ -223,13 +223,13 @@ void setPixel(int x, int y, int red, int green, int blue) {
     red = clamp(red);
     green = clamp(green);
     blue = clamp(blue);
-    x = x % WIDTH;
-    y = y % HEIGHT;
+    x = x % LED_WIDTH;
+    y = y % LED_HEIGHT;
     if (y % 2 == 0) {
         // reverse every other row
-        x = (WIDTH - 1) - x;
+        x = (LED_WIDTH - 1) - x;
     }
-    leds[(x + y * WIDTH)] = CRGB(pgm_read_byte(&gamma8[red]), pgm_read_byte(&gamma8[green]),
+    leds[(x + y * LED_WIDTH)] = CRGB(pgm_read_byte(&gamma8[red]), pgm_read_byte(&gamma8[green]),
                                  pgm_read_byte(&gamma8[blue]));
 }
 
@@ -282,14 +282,33 @@ void displayMovingRainbow(int colors, int speed, bool axis, float saturation, fl
 
 }
 
+uint16_t XY(uint8_t X, uint8_t Y) {
+    return (X * LED_WIDTH) + X;
+}
 
+void displayMovingStripsPattern() {
+    const float hl = 6;
+    int t = millis()/5;
+
+    for (int i = 0; i <NUM_LEDS; i++)
+    {
+        int c = (abs(i - hl)/hl)*20;
+        byte b = sin8(c+t/8);
+        if ((b+t)%250<130)
+            leds [i] = CRGB::Black;
+        else
+            leds [i] = ColorFromPalette(RainbowColors_p,(b+t)%250,255);
+    }
+    blur2d(leds, LED_WIDTH, LED_HEIGHT, 64);
+}
 
 void loop() {
 //    random16_add_entropy(random());
 //    // fastest update is about 30 ms
 //    // displayFullscreenRainbowCycle(32, 1, 1, 50); // good values for a fast loop
 //    Fire2012();
-    displayImage(true);
-    FastLED.show();
-    delay(1000/30);
+//    displayImage(true);
+//    FastLED.show();
+//    delay(1000/30);
+    displayMovingStripsPattern();
 }
